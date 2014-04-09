@@ -125,7 +125,7 @@
     
     if (includeFunctions && typeof object === "function") {
       if (realFunctions) {
-        var out = prettyPrint ? object.toString() : jsonString(object.toString());
+        var out = prettyPrint ? object.toString() : object.toString();
         return drawValue(indent, out);
       }
     }
