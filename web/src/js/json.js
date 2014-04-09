@@ -301,7 +301,7 @@
   };
   
   /**
-   * Simple function seucring string to be used in json.
+   * Simple function securing string to be used in json.
    * @type _L12.jsonString
    */
   json.jsonString = jsonString;
