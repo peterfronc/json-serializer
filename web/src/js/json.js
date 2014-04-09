@@ -1,5 +1,4 @@
 /*
- * Opentag, a tag deployment platform.
  * Copyright 2013-2014, Qubit Group
  * http://opentag.qubitproducts.com
  * @author Peter Fronc peter.fronc@qubitproducts.com
