@@ -20,12 +20,5 @@ dist
 #why icon ??? Icon?
 ehthumbs.db
 Thumbs.db
-nbproject/genfiles.properties
-nbproject/private
-/modules/dao/nbproject/private/
-/modules/dashboard.dao/nbproject/private/
-web/all-compr.js
-web/all.css
-web/all.js
-modules/widget
+
 
