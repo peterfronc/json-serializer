@@ -244,8 +244,13 @@
    *    on object's properties
    *   config.hasOwn if hasOwnProperty should apply for objects 
    *        (default false)
+   *   config.realFunctions serializer will output toString of function objects,
+   *    this option only applies if includeFunctions is enabled
+   *   config.fakeFunctions if includeFunctions is applied, this option will cause
+   *    empty function to be attached for such objects.
    *   config.includeFunctions if 
-   *      functions should be included (default false)
+   *      functions should be included (default false), if only this option is specified
+   *      fuinctions will be treated as objects and serializer will go over its properties.
    *   config.excludeOnTrue function that will take
    *      current objects property and must return boolean, if returns true,
    *      object will be added to serialized string
@@ -290,6 +295,10 @@
      return json.___tmp;
   };
   
+  /**
+   * Simple function seucring string to be used in json.
+   * @type _L12.jsonString
+   */
   json.jsonString = jsonString;
   
   window.json = json;
