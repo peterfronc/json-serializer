@@ -284,10 +284,16 @@
     if (!(/[^,:{}\[\]0-9.\-+Eaeflnr-u \n\r\t]/.test(
          string.replace(/"(\\.|[^"\\])*"/g, '')))) {
       var expression = "json.___tmp = (" + string + ")";
-      if (window.execScript) {
+      if (window && window.execScript) {
          window.execScript(expression);
        } else {
-         (function () {return window["eval"].call(window, expression); }());
+         (function () {
+           try {
+             return window["eval"].call(window, expression);
+           } catch (noWindow) {
+             return (73, eval)(expression);
+           }
+         }());
        }
      } else {
        throw "insecure json!";
@@ -301,5 +307,15 @@
    */
   json.jsonString = jsonString;
   
-  window.json = json;
+  try {
+    window.json = json;
+  } catch (noWindow) {
+    (73, eval)("this").json = json;
+  }
+  
+  try {
+    module.exports = json;
+  } catch (e) {
+    //try exports
+  }
 }());
