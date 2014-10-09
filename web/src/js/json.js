@@ -33,6 +33,18 @@
     return false;
   }
 
+  function checkIfNameMatch(string, matches) {
+    try {
+      for (var i = 0; i < matches.length; i++) {
+        if (matches[i].test(string)) {
+          return true;
+        }
+      }
+    } catch (ex) {
+    }
+    return false;
+  }
+
   function checkIfNameOf(string, names) {
     for (var i = 0; i < names.length; i++) {
       if (string === names[i]) {
@@ -65,12 +77,13 @@
   function jsonString(object) {
     return "\"" + object.replace(/\\/g, "\\\\").replace(/\"/g, "\\\"") + "\"";
   }
+  
   var TAB = "  ";
   var _serialize = function (object, config, parentElements, level, levelMax) {
     if (!isNaN(levelMax) && level >= levelMax) {
       return undefined;
     }
-    var excludedInstances, excludedTypes, excludedNames, own,
+    var excludedInstances, excludedTypes, excludedMatches, excludedNames, own,
             includeFunctions = false, excludeOnTrue, dateAsString = true,
             raw = false, fakeFunctions = false, realFunctions = false,
             prettyPrint = false;
@@ -81,6 +94,7 @@
       if (config.excludedInstances) excludedInstances = config.excludedInstances;
       if (config.excludedTypes) excludedTypes = config.excludedTypes;
       if (config.excludedNames) excludedNames = config.excludedNames;
+      if (config.excludedMatches) excludedMatches = config.excludedMatches;
       if (config.own) own = config.hasOwn;
       if (config.fakeFunctions) fakeFunctions = config.fakeFunctions;
       if (config.realFunctions) realFunctions = config.realFunctions;
@@ -188,6 +202,9 @@
       if (excludedNames && checkIfNameOf(key, excludedNames)) {
         continue;
       }
+      if (excludedMatches && checkIfNameMatch(key, excludedMatches)) {
+        continue;
+      }
       try {
         var objEl = _serialize(prop, config, parentElements, level, levelMax);
         if (objEl !== undefined) {
@@ -241,6 +258,9 @@
    *    will be called in order to exclude properties on object
    *   config.excludedNames array of strings that will be check
    *    on object's properties
+   *   config.excludedMatches array of regex'es that will be tested on property names
+   *    if any of properties match any of regex in the array - will be excluded from
+   *    serialization.
    *   config.hasOwn if hasOwnProperty should apply for objects 
    *        (default false)
    *   config.realFunctions serializer will output toString of function objects,
@@ -272,7 +292,9 @@
     }
     return _serialize(object, config, parentElements, 0, level);
   };
-
+  
+  var global = (0, eval("this")) || (function(){return this;}()) || this.window;
+  
   /**
    * Parsing json function with specification specified in RFC4627, section 6. 
    * It is a simple security check. Enough for most of needs.
@@ -283,34 +305,24 @@
     if (!(/[^,:{}\[\]0-9.\-+Eaeflnr-u \n\r\t]/.test(
          string.replace(/"(\\.|[^"\\])*"/g, '')))) {
       var expression = "json.___tmp = (" + string + ")";
-      if (window && window.execScript) {
-         window.execScript(expression);
+      if (global.execScript) {
+         global.execScript(expression);
        } else {
-         (function () {
-           try {
-             return window["eval"].call(window, expression);
-           } catch (noWindow) {
-             return (73, eval)(expression);
-           }
-         }());
+         (function () {return global["eval"].call(global, expression); }());
        }
      } else {
        throw "insecure json!";
      }
      return json.___tmp;
   };
+
+  global.json = json;
   
   /**
    * Simple function securing string to be used in json.
    * @type _L12.jsonString
    */
   json.jsonString = jsonString;
-  
-  try {
-    window.json = json;
-  } catch (noWindow) {
-    (73, eval)("this").json = json;
-  }
   
   try {
     module.exports = json;
