@@ -106,7 +106,7 @@
       if (config.excluded) excluded = config.excluded;
       if (config.excludedNames) excludedNames = config.excludedNames;
       if (config.excludedMatches) excludedMatches = config.excludedMatches;
-      if (config.hasOwn) hasOwn = config.hasOwn;
+      if (config.hasOwn !== undefined) hasOwn = config.hasOwn;
       if (config.fakeFunctions) fakeFunctions = config.fakeFunctions;
       if (config.realFunctions) realFunctions = config.realFunctions;
       if (config.includeFunctions) includeFunctions = config.includeFunctions;
