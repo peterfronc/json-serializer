@@ -167,7 +167,11 @@
           continue;
         }
         try {
-          var el = _serialize(object[i], config, parentElements, level, levelMax);
+          var obj = object[i];
+          if (!raw && (obj === undefined)) {
+            obj = null;
+          }
+          var el = _serialize(obj, config, parentElements, level, levelMax);
         } catch (ex) {
           removeFromArray(object, parentElements);
           return jsonString(String(ex));
