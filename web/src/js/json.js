@@ -33,6 +33,15 @@
     return false;
   }
 
+  function checkIfExcluded(object, excluded) {
+    for (var i = 0; i < excluded.length; i++) {
+      if (object === excluded[i]) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   function checkIfNameMatch(string, matches) {
     try {
       for (var i = 0; i < matches.length; i++) {
@@ -83,7 +92,8 @@
     if (!isNaN(levelMax) && level >= levelMax) {
       return undefined;
     }
-    var excludedInstances, excludedTypes, excludedMatches, excludedNames, own,
+    var excludedInstances, excludedTypes, excluded, excludedMatches, 
+            excludedNames, hasOwn = true,
             includeFunctions = false, excludeOnTrue, dateAsString = true,
             raw = false, fakeFunctions = false, realFunctions = false,
             prettyPrint = false;
@@ -93,9 +103,10 @@
       if (config.raw) raw = config.raw; //json type as default
       if (config.excludedInstances) excludedInstances = config.excludedInstances;
       if (config.excludedTypes) excludedTypes = config.excludedTypes;
+      if (config.excluded) excluded = config.excluded;
       if (config.excludedNames) excludedNames = config.excludedNames;
       if (config.excludedMatches) excludedMatches = config.excludedMatches;
-      if (config.own) own = config.hasOwn;
+      if (config.hasOwn) hasOwn = config.hasOwn;
       if (config.fakeFunctions) fakeFunctions = config.fakeFunctions;
       if (config.realFunctions) realFunctions = config.realFunctions;
       if (config.includeFunctions) includeFunctions = config.includeFunctions;
@@ -187,7 +198,7 @@
     var parts = [];
     for (var key in object) {
       var prop = object[key];
-      if (own && !object.hasOwnProperty(key)) {
+      if (hasOwn && !object.hasOwnProperty(key)) {
         continue;
       }
       if (excludeOnTrue) {
@@ -204,6 +215,9 @@
         continue;
       }
       if (excludedNames && checkIfNameOf(key, excludedNames)) {
+        continue;
+      }
+      if (excluded && checkIfExcluded(prop, excluded)) {
         continue;
       }
       if (excludedMatches && checkIfNameMatch(key, excludedMatches)) {
@@ -321,7 +335,6 @@
   
   /**
    * Simple function securing string to be used in json.
-   * @type _L12.jsonString
    */
   json.jsonString = jsonString;
   
