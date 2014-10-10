@@ -33,9 +33,9 @@
     return false;
   }
 
-  function checkIfExcluded(object, excluded) {
-    for (var i = 0; i < excluded.length; i++) {
-      if (object === excluded[i]) {
+  function checkIfExcluded(object, exclude) {
+    for (var i = 0; i < exclude.length; i++) {
+      if (object === exclude[i]) {
         return true;
       }
     }
@@ -92,8 +92,8 @@
     if (!isNaN(levelMax) && level >= levelMax) {
       return undefined;
     }
-    var excludedInstances, excludedTypes, excluded, excludedMatches, 
-            excludedNames, hasOwn = true,
+    var excludeInstances, excludeTypes, exclude, excludeMatches, 
+            excludeNames, hasOwn = true,
             includeFunctions = false, excludeOnTrue, dateAsString = true,
             raw = false, fakeFunctions = false, realFunctions = false,
             prettyPrint = false;
@@ -101,11 +101,11 @@
     if (config) {
       if (config.prettyPrint) {prettyPrint = true;}
       if (config.raw) raw = config.raw; //json type as default
-      if (config.excludedInstances) excludedInstances = config.excludedInstances;
-      if (config.excludedTypes) excludedTypes = config.excludedTypes;
-      if (config.excluded) excluded = config.excluded;
-      if (config.excludedNames) excludedNames = config.excludedNames;
-      if (config.excludedMatches) excludedMatches = config.excludedMatches;
+      if (config.excludeInstances) excludeInstances = config.excludeInstances;
+      if (config.excludeTypes) excludeTypes = config.excludeTypes;
+      if (config.exclude) exclude = config.exclude;
+      if (config.excludeNames) excludeNames = config.excludeNames;
+      if (config.excludeMatches) excludeMatches = config.excludeMatches;
       if (config.hasOwn !== undefined) hasOwn = config.hasOwn;
       if (config.fakeFunctions) fakeFunctions = config.fakeFunctions;
       if (config.realFunctions) realFunctions = config.realFunctions;
@@ -171,10 +171,10 @@
             }
           } catch (ex) {}
         }
-        if (excludedInstances && checkIfInstanceOf(object, excludedInstances)) {
+        if (excludeInstances && checkIfInstanceOf(object, excludeInstances)) {
           continue;
         }
-        if (excludedTypes && checkIfTypeOf(object, excludedTypes)) {
+        if (excludeTypes && checkIfTypeOf(object, excludeTypes)) {
           continue;
         }
         try {
@@ -208,19 +208,19 @@
           }
         } catch (ex) {}
       }
-      if (excludedInstances && checkIfInstanceOf(prop, excludedInstances)) {
+      if (excludeInstances && checkIfInstanceOf(prop, excludeInstances)) {
         continue;
       }
-      if (excludedTypes && checkIfTypeOf(prop, excludedTypes)) {
+      if (excludeTypes && checkIfTypeOf(prop, excludeTypes)) {
         continue;
       }
-      if (excludedNames && checkIfNameOf(key, excludedNames)) {
+      if (excludeNames && checkIfNameOf(key, excludeNames)) {
         continue;
       }
-      if (excluded && checkIfExcluded(prop, excluded)) {
+      if (exclude && checkIfExcluded(prop, exclude)) {
         continue;
       }
-      if (excludedMatches && checkIfNameMatch(key, excludedMatches)) {
+      if (excludeMatches && checkIfNameMatch(key, excludeMatches)) {
         continue;
       }
       try {
@@ -270,11 +270,11 @@
    * Config object assignment:
    * 
    * <pre>
-   *   config.excludedInstances Instanceof will be called
+   *   config.excludeInstances Instanceof will be called
    *      on  excludeInstancess functions array
-   *   config.excludedTypes array of objects that typeof
+   *   config.excludeTypes array of objects that typeof
    *    will be called in order to exclude properties on object
-   *   config.excludedNames array of strings that will be check
+   *   config.excludeNames array of strings that will be check
    *    on object's properties
    *   config.hasOwn if hasOwnProperty should apply for objects 
    *        (default false)
