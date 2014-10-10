@@ -4,11 +4,12 @@ json-serializer
 The purpose of this library is to have a generic object serialization tool that is JSON compatible (by default).
 Apart from `JSON.stringify(object)` compatible `json.serialize(object)` function, `json.serialize` can be passed with config options `json.serialize(object, config)`, which properties can be described:
 
- * `excludedInstances=undefined` Array of instances that will be excluded from object tree elements (instanceof check)
+ * `exclude=undefined` Array of object references to be excluded during process, `===` check.
+ * `excludeInstances=undefined` Array of instances that will be exclude from object tree elements (instanceof check)
  * `level=undefined` Level number (>=1) that serializer should not go below
- * `excludedTypes=undefined` Array of types that will be excluded from object tree elements (typeof check)
- * `excludedNames=undefined` Array of property names that will be excluded from object tree elements
- * `excludedMatches=undefined` Array of regex objects that will be cause objects properties excluded if they match any of regex in the array.
+ * `excludeTypes=undefined` Array of types that will be exclude from object tree elements (typeof check)
+ * `excludeNames=undefined` Array of property names that will be exclude from object tree elements
+ * `excludeMatches=undefined` Array of regex objects that will be cause objects properties exclude if they match any of regex in the array.
  * `own=undefined` If use hasOwnProperty should be used while checking if object property will be added
  * `excludeOnTrue=undefined` function reference that will be used to decide which elements will be included
  * `dateAsString=true` How date will be returned
