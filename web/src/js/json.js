@@ -136,7 +136,7 @@
       return drawValue(indent, "null");
     } else if (object === undefined) {
       return raw ? drawValue(indent, "undefined") : undefined;
-    } else if (typeof prop === "boolean") {
+    } else if (typeof object === "boolean") {
       return drawValue(indent, String(object));
     }
     
