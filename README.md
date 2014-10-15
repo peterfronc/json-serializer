@@ -5,6 +5,8 @@ The purpose of this library is to have a generic object serialization tool that 
 Apart from `JSON.stringify(object)` compatible `json.serialize(object)` function, `json.serialize` can be passed with config options `json.serialize(object, config)`, which properties can be described:
 
  * `exclude=undefined` Array of object references to be excluded during process, `===` check.
+ * `renderFunction=undefined` custom renderer function, must return string,
+     any other value will be ignored.
  * `excludeInstances=undefined` Array of instances that will be exclude from object tree elements (instanceof check)
  * `level=undefined` Level number (>=1) that serializer should not go below
  * `excludeTypes=undefined` Array of types that will be exclude from object tree elements (typeof check)

@@ -84,11 +84,24 @@
   }
 
   function jsonString(object) {
-    return "\"" + object.replace(/\\/g, "\\\\").replace(/\"/g, "\\\"") + "\"";
+    if (typeof object !== "string") {
+      return "\"" + object + "\"";
+    }
+    return "\"" + object
+            .replace(/\\/g, "\\\\")
+            .replace(/\"/g, "\\\"")
+            .replace(/\n/g, "\\n")
+            + "\"";
   }
   
   var TAB = "  ";
-  var _serialize = function (object, config, parentElements, level, levelMax) {
+  var _serialize = function (
+          object,
+          config,
+          parentElements,
+          level,
+          levelMax,
+          propOrIdx) {
     if (!isNaN(levelMax) && level >= levelMax) {
       return undefined;
     }
@@ -96,11 +109,12 @@
             excludeNames, hasOwn = true,
             includeFunctions = false, excludeOnTrue, dateAsString = true,
             raw = false, fakeFunctions = false, realFunctions = false,
-            prettyPrint = false;
+            prettyPrint = false, render;
     
     if (config) {
       if (config.prettyPrint) {prettyPrint = true;}
       if (config.raw) raw = config.raw; //json type as default
+      if (config.renderFunction) render = config.renderFunction; //json type as default
       if (config.excludeInstances) excludeInstances = config.excludeInstances;
       if (config.excludeTypes) excludeTypes = config.excludeTypes;
       if (config.exclude) exclude = config.exclude;
@@ -121,6 +135,21 @@
         indent += TAB;
       }
       eol = "\n";
+    }
+    
+    if (excludeOnTrue) {
+      try {
+        if (excludeOnTrue(object)) {
+          return undefined;
+        }
+      } catch (ex) {}
+    }
+    
+    if (typeof render === "function") {
+      var rendered = render(object, propOrIdx);
+      if (typeof rendered === "string") {
+        return jsonString(rendered);
+      }
     }
     
     if (object instanceof Date) {
@@ -164,13 +193,6 @@
     if (object instanceof Array) {
       var strings = [];
       for (var i = 0; i < object.length; i++) {
-        if (excludeOnTrue) {
-          try {
-            if (excludeOnTrue(object)) {
-              continue;
-            }
-          } catch (ex) {}
-        }
         if (excludeInstances && checkIfInstanceOf(object, excludeInstances)) {
           continue;
         }
@@ -182,7 +204,7 @@
           if (!raw && (obj === undefined)) {
             obj = null;
           }
-          var el = _serialize(obj, config, parentElements, level, levelMax);
+          var el = _serialize(obj, config, parentElements, level, levelMax, i);
         } catch (ex) {
           removeFromArray(object, parentElements);
           return jsonString(String(ex));
@@ -201,13 +223,6 @@
       if (hasOwn && !object.hasOwnProperty(key)) {
         continue;
       }
-      if (excludeOnTrue) {
-        try {
-          if (excludeOnTrue(object)) {
-            continue;
-          }
-        } catch (ex) {}
-      }
       if (excludeInstances && checkIfInstanceOf(prop, excludeInstances)) {
         continue;
       }
@@ -224,7 +239,8 @@
         continue;
       }
       try {
-        var objEl = _serialize(prop, config, parentElements, level, levelMax);
+        var objEl = 
+            _serialize(prop, config, parentElements, level, levelMax, key);
         if (objEl !== undefined) {
           var elString = ("\"" + key.replace(/\"/g, "\\\"") + "\":") + objEl;
           parts.push(elString);
@@ -276,6 +292,8 @@
    *    will be called in order to exclude properties on object
    *   config.excludeNames array of strings that will be check
    *    on object's properties
+   *   config.renderFunction custom renderer function, must return string,
+   *      any other value will be ignored.
    *   config.hasOwn if hasOwnProperty should apply for objects 
    *        (default false)
    *   config.realFunctions serializer will output toString of function objects,
