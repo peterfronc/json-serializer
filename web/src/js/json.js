@@ -90,8 +90,8 @@
     return "\"" + object
             .replace(/\\/g, "\\\\")
             .replace(/\"/g, "\\\"")
-            .replace(/\n/g, "\\n")
-            + "\"";
+            .replace(/\n/g, "\\n") +
+            "\"";
   }
   
   var TAB = "  ";
@@ -112,26 +112,56 @@
             prettyPrint = false, render;
     
     if (config) {
-      if (config.prettyPrint) {prettyPrint = true;}
-      if (config.raw) raw = config.raw; //json type as default
-      if (config.renderFunction) render = config.renderFunction; //json type as default
-      if (config.excludeInstances) excludeInstances = config.excludeInstances;
-      if (config.excludeTypes) excludeTypes = config.excludeTypes;
-      if (config.exclude) exclude = config.exclude;
-      if (config.excludeNames) excludeNames = config.excludeNames;
-      if (config.excludeMatches) excludeMatches = config.excludeMatches;
-      if (config.hasOwn !== undefined) hasOwn = config.hasOwn;
-      if (config.fakeFunctions) fakeFunctions = config.fakeFunctions;
-      if (config.realFunctions) realFunctions = config.realFunctions;
-      if (config.includeFunctions) includeFunctions = config.includeFunctions;
-      if (config.excludeOnTrue) excludeOnTrue = config.excludeOnTrue;
-      if (config.dateAsString) dateAsString = config.dateAsString;
+      if (config.prettyPrint) {
+        prettyPrint = true;
+      }
+      if (config.raw) {
+        raw = config.raw;
+      } //json type as default
+      if (config.renderFunction) {
+        render = config.renderFunction;
+      } //json type as default
+      if (config.excludeInstances) {
+        excludeInstances = config.excludeInstances;
+      }
+      if (config.excludeTypes) {
+        excludeTypes = config.excludeTypes;
+      }
+      if (config.exclude) {
+        exclude = config.exclude;
+      }
+      if (config.excludeNames) {
+        excludeNames = config.excludeNames;
+      }
+      if (config.excludeMatches) {
+        excludeMatches = config.excludeMatches;
+      }
+      if (config.hasOwn !== undefined) {
+        hasOwn = config.hasOwn;
+      }
+      if (config.fakeFunctions) {
+        fakeFunctions = config.fakeFunctions;
+      }
+      if (config.realFunctions) {
+        realFunctions = config.realFunctions;
+      }
+      if (config.includeFunctions) {
+        includeFunctions = config.includeFunctions;
+      }
+      if (config.excludeOnTrue) {
+        excludeOnTrue = config.excludeOnTrue;
+      }
+      if (config.dateAsString) {
+        dateAsString = config.dateAsString;
+      }
     }
+    
+    var i;
     
     var indent = "";
     var eol = "";
     if (prettyPrint) {
-      for (var i = 0; i < level; i++) {
+      for (i = 0; i < level; i++) {
         indent += TAB;
       }
       eol = "\n";
@@ -172,7 +202,7 @@
         
     if (includeFunctions && typeof object === "function") {
       if (fakeFunctions) {
-        return "(function(){})";
+        return "(function () {})";
       }
     }
     
@@ -192,19 +222,20 @@
     
     if (object instanceof Array) {
       var strings = [];
-      for (var i = 0; i < object.length; i++) {
+      for (i = 0; i < object.length; i++) {
         if (excludeInstances && checkIfInstanceOf(object, excludeInstances)) {
           continue;
         }
         if (excludeTypes && checkIfTypeOf(object, excludeTypes)) {
           continue;
         }
+        var el;
         try {
           var obj = object[i];
           if (!raw && (obj === undefined)) {
             obj = null;
           }
-          var el = _serialize(obj, config, parentElements, level, levelMax, i);
+          el = _serialize(obj, config, parentElements, level, levelMax, i);
         } catch (ex) {
           removeFromArray(object, parentElements);
           return jsonString(String(ex));
@@ -258,20 +289,21 @@
     return indent ? (" " + string) : string;
   }
 
-  function drawObject(s, e, indent, eol, parts){
+  function drawObject(s, e, indent, eol, parts) {
     var array, spaceAfterColon = " ";
-    if (indent==="") {
+    if (indent === "") {
       spaceAfterColon = "";
     }
     if (indent || eol) {
-      if (parts.length === 0 ) {
+      if (parts.length === 0) {
         array = [spaceAfterColon, s, parts.join(","), e];
       } else {
-        array = [spaceAfterColon, s, "\n",
-                indent, TAB,
-                      parts.join("," + "\n" + indent + TAB),
-                "\n",indent, e
-              ];
+        array = [
+          spaceAfterColon, s, "\n",
+          indent, TAB,
+          parts.join("," + "\n" + indent + TAB),
+          "\n", indent, e
+        ];
       }
     } else {
       array = [s, parts.join(","), e];
@@ -326,7 +358,8 @@
     return _serialize(object, config, parentElements, 0, level);
   };
   
-  var global = (0, eval("this")) || (function(){return this;}()) || this.window;
+  var global = (0, eval("this")) || (function () {return this; }()) ||
+          this.window;
   
   /**
    * Parsing json function with specification specified in RFC4627, section 6. 
@@ -336,17 +369,17 @@
    */
   json.parse = function (string) {
     if (!(/[^,:{}\[\]0-9.\-+Eaeflnr-u \n\r\t]/.test(
-         string.replace(/"(\\.|[^"\\])*"/g, '')))) {
+        string.replace(/"(\\.|[^"\\])*"/g, '')))) {
       var expression = "json.___tmp = (" + string + ")";
       if (global.execScript) {
-         global.execScript(expression);
-       } else {
-         (function () {return global["eval"].call(global, expression); }());
-       }
-     } else {
-       throw "insecure json!";
-     }
-     return json.___tmp;
+        global.execScript(expression);
+      } else {
+        (function () {return global["eval"].call(global, expression); }());
+      }
+    } else {
+      throw "insecure json!";
+    }
+    return json.___tmp;
   };
 
   global.json = json;
