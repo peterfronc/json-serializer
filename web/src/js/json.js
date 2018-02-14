@@ -95,14 +95,36 @@
     levelMax: -1
   };
 
-  Json.prototype.drawValue = function (indentString, string, object) {
+  /**
+   *
+   * @param {type} string
+   * @param {type} object
+   * @returns {unresolved}
+   */
+  Json.prototype.drawValue = function (string, object, level) {
       return string;
   };
 
+  /**
+   *
+   * @param {type} key
+   * @param {type} object
+   * @param {type} parentElements
+   * @param {type} level
+   * @returns {String}
+   */
   Json.prototype.drawProperty = function (key, object, parentElements, level) {
     return (["\"", key.replace(/\"/g, "\\\""), "\"", this.PROP_INDENT].join(""));
   };
 
+  /**
+   *
+   * @param {type} indentString
+   * @param {type} parts
+   * @param {type} object
+   * @param {type} parentElements
+   * @returns {String}
+   */
   Json.prototype.drawArray = function (
                       indentString,
                       parts,
@@ -215,22 +237,22 @@
     // indent is used as boolean here!
     if (object instanceof Date) {
       return this.drawValue(
-              indent,
-              (!this.raw || this.dateAsString) ?
-              jsonString(object.toISOString()) : object.valueOf(),
-              object);
+                (!this.raw || this.dateAsString) ?
+                  jsonString(object.toISOString()) : object.valueOf(),
+                object,
+                level);
     } else if (!this.includeFunctions && typeof object === "function") {
       return undefined;
     } else if (typeof object === "number") {
-      return this.drawValue(indent, String(object), object);
+      return this.drawValue(String(object), object, level);
     } else if (typeof object === "string") {
-      return this.drawValue(indent, jsonString(object), object);
+      return this.drawValue(jsonString(object), object, level);
     } else if (object === null) {
-      return this.drawValue(indent, "null", object);
+      return this.drawValue("null", object, level);
     } else if (object === undefined) {
-      return this.raw ? this.drawValue(indent, "undefined", object) : undefined;
+      return this.raw ? this.drawValue("undefined", object, level) : undefined;
     } else if (typeof object === "boolean") {
-      return this.drawValue(indent, String(object), object);
+      return this.drawValue(String(object), object, level);
     }
 
     if (this.includeFunctions && typeof object === "function") {
@@ -243,7 +265,7 @@
       if (this.realFunctions) {
         // @todo
         var out = this.prettyPrint ? object.toString() : object.toString();
-        return this.drawValue(indent, out, object);
+        return this.drawValue(out, object, level);
       }
     }
 
@@ -480,6 +502,9 @@ function checkIfInstanceOf(object, instances) {
     }
     if (config.drawArray) {
       inst.drawObject = config.drawArray;
+    }
+    if (config.drawGeneralObject) {
+      inst.drawGeneralObject = config.drawGeneralObject;
     }
     return inst.serialize(object);
   };
