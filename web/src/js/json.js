@@ -163,7 +163,6 @@
   Json.prototype.serialize = function (object) {
     var level = 0;
     var parentElements = [];
-debugger;
     return this._processor(
               object,
               parentElements,
@@ -511,3 +510,53 @@ function checkIfInstanceOf(object, instances) {
     //try exports
   }
 }());
+
+
+clear();
+console.log("-------------------------")
+
+console.log(json.serialize([234, ,4,4,3, {a:1,b:{c:2,d:{x:2}, y: new Date(), x:[new Date()]}} ],{TAB: "    ",prettyPrint: true}));
+
+console.log(`[
+    234,
+    null,
+    4,
+    4,
+    3,
+    {
+        \"a\": 1,
+        \"b\": {
+            \"c\": 2,
+            \"d\": {
+                \"x\": 2
+            },
+            \"y\": \"2018-02-14T13:48:42.164Z\",
+            \"x\": [
+                \"2018-02-14T13:48:42.164Z\"
+            ]
+        }
+    }
+]`)
+
+console.log("-------------------------")
+console.log(json.serialize(
+        {a:1,b:{c:2,d:{x:2}, y: new Date(), x:[new Date()]}}, {
+  drawVxalue: function (indent, val, object) {
+    return String(val);
+  },
+  prettyPrint: true,
+  TAB: "->",
+  PROP_INDENT: ":",
+  COMMA: ""
+}));
+console.log("-------------------------")
+
+console.log(json.serialize(
+  [234, ,4,4,3, {a:1,b:{c:2,d:{x:2}, y: new Date(), x:[new Date()]}} ],
+  {
+    TAB: "   ",
+    PROP_INDENT: " => ",
+    COMMA: " ,",
+    prettyPrint: true
+  }
+));
