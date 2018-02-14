@@ -29,7 +29,6 @@ By default json.serialize(object) will output normal JSON, same as known JSON.st
 * implementation is very minimal and kept simple (feel free to commit to work)
 * delivers function `json.parse` which is a similar method to `JSON.parse`, with a simpler regex used.
 
-If you have any queries or sugesstions please write to peter.fronc@qubitproducts.com
 
 
 

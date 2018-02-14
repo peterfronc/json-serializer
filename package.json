@@ -1,13 +1,13 @@
 {
   "name": "json-serializer",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "JSON compatible serializer and deserializer for javascript.",
   "main": "web/src/js/json.js",
   "directories": {},
   "scripts": {},
   "repository": {
     "type": "git",
-    "url": "ssh://git@bitbucket.org/peterfronc/json-serializer.git"
+    "url": "https://github.com/peterfronc/json-serializer"
   },
   "author": "Peter Fronc <peter.fronc@qubitproducts.com>",
   "license": "LGPL:",
