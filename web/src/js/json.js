@@ -10,13 +10,341 @@
 
 (function () {
 
-  var json = {
+  function Json (config) {
+    this.config = config;
+
+    if (config) {
+      if (config.prettyPrint) {
+        this.prettyPrint = true;
+      }
+      if (config.raw) {
+        this.raw = config.raw;
+      } //json type as default
+      if (config.renderRedirect) {
+        this.renderRedirect = config.renderRedirect;
+      } //json type as default
+      if (config.excludeInstances) {
+        this.excludeInstances = config.excludeInstances;
+      }
+      if (config.excludeTypes) {
+        this.excludeTypes = config.excludeTypes;
+      }
+      if (config.exclude) {
+        this.exclude = config.exclude;
+      }
+      if (config.excludeNames) {
+        this.excludeNames = config.excludeNames;
+      }
+      if (config.excludeMatches) {
+        this.excludeMatches = config.excludeMatches;
+      }
+      if (config.hasOwn !== undefined) {
+        this.hasOwn = config.hasOwn;
+      }
+      if (config.fakeFunctions) {
+        this.fakeFunctions = config.fakeFunctions;
+      }
+      if (config.realFunctions) {
+        this.realFunctions = config.realFunctions;
+      }
+      if (config.includeFunctions) {
+        this.includeFunctions = config.includeFunctions;
+      }
+      if (config.excludeOnTrue) {
+        this.excludeOnTrue = config.excludeOnTrue;
+      }
+      if (config.dateAsString) {
+        this.dateAsString = config.dateAsString;
+      }
+      if (config.TAB !== undefined) {
+        this.TAB = config.TAB;
+      }
+      if (config.PROP_INDENT !== undefined) {
+        this.PROP_INDENT = config.PROP_INDENT;
+      }
+      if (config.COMMA !== undefined) {
+        this.COMMA = config.COMMA;
+      }
+      if (config.level) { // backwards compatibility
+        this.levelMax = config.level;
+      }
+      if (config.levelMax) {
+        this.levelMax = config.levelMax;
+      }
+    }
+  }
+
+  Json.prototype = {
     TAB: "  ",
-    PROP_INDENT: " ",
-    COMMA: ","
+    PROP_INDENT: ": ",
+    COMMA: ",",
+    excludeInstances: null,
+    excludeTypes: null,
+    exclude: null,
+    excludeMatches: null,
+    excludeNames: null,
+    hasOwn: true,
+    includeFunctions: false,
+    excludeOnTrue: null,
+    dateAsString: true,
+    raw: false,
+    fakeFunctions: false,
+    realFunctions: false,
+    prettyPrint: false,
+    renderRedirect: null,
+    levelMax: -1
   };
 
-  function checkIfInstanceOf(object, instances) {
+  Json.prototype.drawValue = function (indentString, string, object) {
+      return string;
+  };
+
+  Json.prototype.drawProperty = function (key, object, parentElements, level) {
+    return (["\"", key.replace(/\"/g, "\\\""), "\"", this.PROP_INDENT].join(""));
+  };
+
+  Json.prototype.drawArray = function (
+                      indentString,
+                      parts,
+                      object,
+                      parentElements) {
+    return this.drawGeneralObject(
+      "[", "]",
+      indentString,
+      parts,
+      object,
+      parentElements);
+  };
+
+  Json.prototype.drawObject = function (
+                      indentString,
+                      parts,
+                      object,
+                      parentElements) {
+    return this.drawGeneralObject(
+      "{", "}",
+      indentString,
+      parts,
+      object,
+      parentElements);
+  };
+
+  Json.prototype.drawGeneralObject = function (
+          lbracket, rbracket,
+          indentString,
+          parts,
+          object,
+          parentElements) {
+    var array;
+
+    if (indentString || this.prettyPrint) {
+      if (parts.length === 0) {
+        array = [lbracket, parts.join(this.COMMA), rbracket];
+      } else {
+        array = [
+          lbracket, "\n",
+          indentString, this.TAB,
+          parts.join(this.COMMA + "\n" + indentString + this.TAB),
+          "\n", indentString, rbracket
+        ];
+      }
+    } else {
+      array = [lbracket, parts.join(this.COMMA), rbracket];
+    }
+
+    return array.join("");
+  };
+
+  /**
+   * Serializing function.
+   * @param {Object} object
+   * @returns {String} serialized object
+   */
+  Json.prototype.serialize = function (object) {
+    var level = 0;
+    var parentElements = [];
+debugger;
+    return this._processor(
+              object,
+              parentElements,
+              level);
+  };
+
+  /*
+   * @private
+   * Serializer engine.
+   * @param {type} object
+   * @param {type} parentElements
+   * @param {type} level
+   * @param {type} propOrIdx
+   * @returns {nm$_json.jsonL#11.Json.prototype@call;drawValue|undefined|String}
+   */
+  Json.prototype._processor = function (
+                                  object,
+                                  parentElements,
+                                  level,
+                                  propOrIdx) {
+    if (this.levelMax >= 0 && level >= this.levelMax) {
+      return undefined;
+    }
+
+    var i;
+
+    var indent = "";
+    if (this.prettyPrint) {
+      for (i = 0; i < level; i++) {
+        indent += this.TAB;
+      }
+    }
+
+    if (this.excludeOnTrue) {
+      try {
+        if (this.excludeOnTrue(object)) {
+          return undefined;
+        }
+      } catch (ex) {
+      }
+    }
+
+    if (typeof this.renderRedirect === "function") {
+      var rendered = this.renderRedirect(object, propOrIdx);
+      if (typeof rendered === "string") {
+        return jsonString(rendered);
+      }
+    }
+
+    // indent is used as boolean here!
+    if (object instanceof Date) {
+      return this.drawValue(
+              indent,
+              (!this.raw || this.dateAsString) ?
+              jsonString(object.toISOString()) : object.valueOf(),
+              object);
+    } else if (!this.includeFunctions && typeof object === "function") {
+      return undefined;
+    } else if (typeof object === "number") {
+      return this.drawValue(indent, String(object), object);
+    } else if (typeof object === "string") {
+      return this.drawValue(indent, jsonString(object), object);
+    } else if (object === null) {
+      return this.drawValue(indent, "null", object);
+    } else if (object === undefined) {
+      return this.raw ? this.drawValue(indent, "undefined", object) : undefined;
+    } else if (typeof object === "boolean") {
+      return this.drawValue(indent, String(object), object);
+    }
+
+    if (this.includeFunctions && typeof object === "function") {
+      if (this.fakeFunctions) {
+        return "(function () {})";
+      }
+    }
+
+    if (this.includeFunctions && typeof object === "function") {
+      if (this.realFunctions) {
+        // @todo
+        var out = this.prettyPrint ? object.toString() : object.toString();
+        return this.drawValue(indent, out, object);
+      }
+    }
+
+    if (objectExistsInParentElements(object, parentElements)) {
+      return undefined;//"\"[parent contained]\"";
+    }
+
+    parentElements.push(object);
+    ++level;
+
+    var strings;
+
+    if (object instanceof Array) {
+      strings = [];
+      for (i = 0; i < object.length; i++) {
+        if (this.excludeInstances && checkIfInstanceOf(object, this.excludeInstances)) {
+          continue;
+        }
+        if (this.excludeTypes && checkIfTypeOf(object, this.excludeTypes)) {
+          continue;
+        }
+        var el;
+        try {
+          var obj = object[i];
+          if (!this.raw && (obj === undefined)) {
+            obj = null;
+          }
+          el = this._processor(obj, parentElements, level, i);
+        } catch (ex) {
+          removeFromArray(object, parentElements);
+          return jsonString(String(ex));
+        }
+        if (el !== undefined) {
+          strings.push(el);
+        }
+      }
+      removeFromArray(object, parentElements);
+      return this.drawArray(
+              indent,
+              strings,
+              object,
+              parentElements);
+    }
+
+    // else:
+    strings = [];
+    for (var key in object) {
+      var prop = object[key];
+      if (this.hasOwn && !object.hasOwnProperty(key)) {
+        continue;
+      }
+      if (this.excludeInstances && checkIfInstanceOf(prop, this.excludeInstances)) {
+        continue;
+      }
+      if (this.excludeTypes && checkIfTypeOf(prop, this.excludeTypes)) {
+        continue;
+      }
+      if (this.excludeNames && checkIfNameOf(key, this.excludeNames)) {
+        continue;
+      }
+      if (this.exclude && checkIfExcluded(prop, this.exclude)) {
+        continue;
+      }
+      if (this.excludeMatches && checkIfNameMatch(key, this.excludeMatches)) {
+        continue;
+      }
+      try {
+        var objEl =
+                this._processor(prop, parentElements, level, key);
+        if (objEl !== undefined) {
+          var elString =
+                  this.drawProperty(key, object, parentElements, level) + objEl;
+          strings.push(elString);
+        }
+      } catch (ex) {//SOME OBJECT CAN THROW EXCEPTION ON Access, FRAMES ETC.
+        removeFromArray(object, parentElements);
+        return jsonString(String(ex));
+      }
+    }
+    removeFromArray(object, parentElements);
+    return this.drawObject(indent, strings, object, parentElements);
+
+  };
+
+  Json.prototype.parse = function (string) {
+    if (!(/[^,:{}\[\]0-9.\-+Eaeflnr-u \n\r\t]/.test(
+        string.replace(/"(\\.|[^"\\])*"/g, '')))) {
+      var expression = "json.___tmp = (" + string + ")";
+      if (global.execScript) {
+        global.execScript(expression);
+      } else {
+        (function () {return global["eval"].call(global, expression); }());
+      }
+    } else {
+      throw "insecure json!";
+    }
+    return json.___tmp;
+  };
+
+function checkIfInstanceOf(object, instances) {
     for (var i = 0; i < instances.length; i++) {
       if ((typeof(instances[i]) === "function") && /*ie case*/
             object instanceof instances[i]) {
@@ -25,8 +353,6 @@
     }
     return false;
   }
-
-  json.checkIfInstanceOf = checkIfInstanceOf;
 
   function checkIfTypeOf(object, types) {
     for (var i = 0; i < types.length; i++) {
@@ -98,312 +424,9 @@
             "\"";
   }
 
-  json.drawValue = function (indentString, string, object) {
-      return string;
-  };
+  var json = {};
 
-  json.drawProperty = function (key, object, parentElements, level, PROP_INDENT) {
-    return (["\"", key.replace(/\"/g, "\\\""), "\"", PROP_INDENT].join(""));
-  };
-
-  json.drawArray = function (
-                      indentString,
-                      prettyPrint,
-                      parts,
-                      tab, comma, object, parentElements) {
-    return json.drawGeneralObject(
-      "[", "]",
-      indentString,
-      prettyPrint,
-      parts,
-      tab, comma, object, parentElements)
-  };
-
-  json.drawObject = function (
-                      indentString,
-                      prettyPrint,
-                      parts,
-                      tab, comma, object, parentElements) {
-    return json.drawGeneralObject(
-      "{", "}",
-      indentString,
-      prettyPrint,
-      parts,
-      tab, comma, object, parentElements)
-  };
-
-  json.drawGeneralObject = function (
-          lbracket, rbracket,
-          indentString, prettyPrint,
-          parts,
-          tab, comma, object, parentElements) {
-
-    var array;
-
-    if (indentString || prettyPrint) {
-      if (parts.length === 0) {
-        array = [lbracket, parts.join(comma), rbracket];
-      } else {
-        array = [
-          lbracket, "\n",
-          indentString, tab,
-          parts.join(comma + "\n" + indentString + tab),
-          "\n", indentString, rbracket
-        ];
-      }
-    } else {
-      array = [lbracket, parts.join(comma), rbracket];
-    }
-
-    return array.join("");
-  };
-
-  var _serialize = function (
-          object,
-          config,
-          parentElements,
-          level,
-          levelMax,
-          propOrIdx) {
-
-    var excludeInstances, excludeTypes, exclude, excludeMatches,
-              excludeNames,
-              hasOwn = true,
-              includeFunctions = false,
-              excludeOnTrue = false,
-              dateAsString = true,
-              raw = false,
-              fakeFunctions = false,
-              realFunctions = false,
-              prettyPrint = false,
-              render,
-              drawValue = json.drawValue,
-              drawProperty = json.drawProperty,
-              drawObject = json.drawObject,
-              drawArray = json.drawArray,
-              TAB = json.TAB,
-              PROP_INDENT = json.PROP_INDENT,
-              COMMA = json.COMMA;
-
-    if (config) {
-      if (config.prettyPrint) {
-        prettyPrint = true;
-      }
-      if (config.raw) {
-        raw = config.raw;
-      } //json type as default
-      if (config.renderFunction) {
-        render = config.renderFunction;
-      } //json type as default
-      if (config.excludeInstances) {
-        excludeInstances = config.excludeInstances;
-      }
-      if (config.excludeTypes) {
-        excludeTypes = config.excludeTypes;
-      }
-      if (config.exclude) {
-        exclude = config.exclude;
-      }
-      if (config.excludeNames) {
-        excludeNames = config.excludeNames;
-      }
-      if (config.excludeMatches) {
-        excludeMatches = config.excludeMatches;
-      }
-      if (config.hasOwn !== undefined) {
-        hasOwn = config.hasOwn;
-      }
-      if (config.fakeFunctions) {
-        fakeFunctions = config.fakeFunctions;
-      }
-      if (config.realFunctions) {
-        realFunctions = config.realFunctions;
-      }
-      if (config.includeFunctions) {
-        includeFunctions = config.includeFunctions;
-      }
-      if (config.excludeOnTrue) {
-        excludeOnTrue = config.excludeOnTrue;
-      }
-      if (config.dateAsString) {
-        dateAsString = config.dateAsString;
-      }
-      if (config.drawValue) {
-        drawValue = config.drawValue;
-      }
-      if (config.drawProperty) {
-        drawProperty = config.drawProperty;
-      }
-      if (config.drawObject) {
-        drawObject = config.drawObject;
-      }
-      if (config.drawArray) {
-        drawObject = config.drawArray;
-      }
-      if (config.TAB !== undefined) {
-        TAB = config.TAB;
-      }
-      if (config.PROP_INDENT !== undefined) {
-        PROP_INDENT = config.PROP_INDENT;
-      }
-      if (config.COMMA !== undefined) {
-        COMMA = config.COMMA;
-      }
-    }
-
-    return _processor(
-          object,
-          parentElements,
-          level,
-          levelMax,
-          propOrIdx);
-
-    function _processor (
-            object,
-            parentElements,
-            level,
-            levelMax,
-            propOrIdx) {
-      if (!isNaN(levelMax) && level >= levelMax) {
-        return undefined;
-      }
-
-      var i;
-
-      var indent = "";
-      if (prettyPrint) {
-        for (i = 0; i < level; i++) {
-          indent += TAB;
-        }
-      }
-
-      if (excludeOnTrue) {
-        try {
-          if (excludeOnTrue(object)) {
-            return undefined;
-          }
-        } catch (ex) {}
-      }
-
-      if (typeof render === "function") {
-        var rendered = render(object, propOrIdx);
-        if (typeof rendered === "string") {
-          return jsonString(rendered);
-        }
-      }
-
-      // indent is used as boolean here!
-      if (object instanceof Date) {
-        return drawValue(
-          indent,
-          (!raw || dateAsString) ?
-            jsonString(object.toISOString()) : object.valueOf(),
-          object);
-      } else if (!includeFunctions && typeof object === "function") {
-        return undefined;
-      } else if (typeof object === "number") {
-        return drawValue(indent, String(object), object);
-      } else if (typeof object === "string") {
-        return drawValue(indent, jsonString(object), object);
-      } else if (object === null) {
-        return drawValue(indent, "null", object);
-      } else if (object === undefined) {
-        return raw ? drawValue(indent, "undefined", object) : undefined;
-      } else if (typeof object === "boolean") {
-        return drawValue(indent, String(object), object);
-      }
-
-      if (includeFunctions && typeof object === "function") {
-        if (fakeFunctions) {
-          return "(function () {})";
-        }
-      }
-
-      if (includeFunctions && typeof object === "function") {
-        if (realFunctions) {
-          var out = prettyPrint ? object.toString() : object.toString();
-          return drawValue(indent, out, object);
-        }
-      }
-
-      if (objectExistsInParentElements(object, parentElements)) {
-        return undefined;//"\"[parent contained]\"";
-      }
-
-      parentElements.push(object);
-      ++level;
-
-      var strings;
-
-      if (object instanceof Array) {
-        strings = [];
-        for (i = 0; i < object.length; i++) {
-          if (excludeInstances && checkIfInstanceOf(object, excludeInstances)) {
-            continue;
-          }
-          if (excludeTypes && checkIfTypeOf(object, excludeTypes)) {
-            continue;
-          }
-          var el;
-          try {
-            var obj = object[i];
-            if (!raw && (obj === undefined)) {
-              obj = null;
-            }
-            el = _processor(obj, parentElements, level, levelMax, i);
-          } catch (ex) {
-            removeFromArray(object, parentElements);
-            return jsonString(String(ex));
-          }
-          if (el !== undefined) {
-            strings.push(el);
-          }
-        }
-        removeFromArray(object, parentElements);
-        return drawArray(
-          indent, prettyPrint, strings, TAB, COMMA, object, parentElements);
-      }
-
-      // else:
-      strings = [];
-      for (var key in object) {
-        var prop = object[key];
-        if (hasOwn && !object.hasOwnProperty(key)) {
-          continue;
-        }
-        if (excludeInstances && checkIfInstanceOf(prop, excludeInstances)) {
-          continue;
-        }
-        if (excludeTypes && checkIfTypeOf(prop, excludeTypes)) {
-          continue;
-        }
-        if (excludeNames && checkIfNameOf(key, excludeNames)) {
-          continue;
-        }
-        if (exclude && checkIfExcluded(prop, exclude)) {
-          continue;
-        }
-        if (excludeMatches && checkIfNameMatch(key, excludeMatches)) {
-          continue;
-        }
-        try {
-          var objEl =
-              _processor(prop, parentElements, level, levelMax, key);
-          if (objEl !== undefined) {
-            var elString =
-              drawProperty(key, object, parentElements, level, PROP_INDENT) + objEl;
-            strings.push(elString);
-          }
-        } catch (ex) {//SOME OBJECT CAN THROW EXCEPTION ON Access, FRAMES ETC.
-          removeFromArray(object, parentElements);
-          return jsonString(String(ex));
-        }
-      }
-      removeFromArray(object, parentElements);
-      return drawObject(
-        indent, prettyPrint, strings, TAB, COMMA, object, parentElements);
-    }
-  };
+  json.Json = Json;
 
   /**
    * Exclusive and luxury javascript serializer.
@@ -417,7 +440,7 @@
    *    will be called in order to exclude properties on object
    *   config.excludeNames array of strings that will be check
    *    on object's properties
-   *   config.renderFunction custom renderer function, must return string,
+   *   config.renderRedirect custom renderer function, must return string,
    *      any other value will be ignored, note that it should skip objects.
    *   config.hasOwn if hasOwnProperty should apply for objects
    *        (default false)
@@ -431,7 +454,7 @@
    *   config.excludeOnTrue function that will take
    *      current objects property and must return boolean, if returns true,
    *      object will be added to serialized string
-   *   config.level if specified, ho maximally deep
+   *   config.levelMax if specified, how maximally deep
    *    properties generation can go.
    *   config.dateAsString = treat dates as strings (default true)
    *   config.raw dont use "json" specific output and serialize real values
@@ -446,12 +469,20 @@
    * @returns {String}
    */
   json.serialize = function (object, config) {
-    var parentElements = [];
-    var level;
-    if (config) {
-      level = config.level;
+    var inst = new Json(config);
+    if (config.drawValue) {
+      inst.drawValue = config.drawValue;
     }
-    return _serialize(object, config, parentElements, 0, level);
+    if (config.drawProperty) {
+      inst.drawProperty = config.drawProperty;
+    }
+    if (config.drawObject) {
+      inst.drawObject = config.drawObject;
+    }
+    if (config.drawArray) {
+      inst.drawObject = config.drawArray;
+    }
+    return inst.serialize(object);
   };
 
   var global = (0, eval("this")) || (function () {return this; }()) ||
@@ -464,18 +495,7 @@
    * @returns {RegExp}
    */
   json.parse = function (string) {
-    if (!(/[^,:{}\[\]0-9.\-+Eaeflnr-u \n\r\t]/.test(
-        string.replace(/"(\\.|[^"\\])*"/g, '')))) {
-      var expression = "json.___tmp = (" + string + ")";
-      if (global.execScript) {
-        global.execScript(expression);
-      } else {
-        (function () {return global["eval"].call(global, expression); }());
-      }
-    } else {
-      throw "insecure json!";
-    }
-    return json.___tmp;
+    return new Json().parse(string);
   };
 
   global.json = json;
@@ -491,4 +511,3 @@
     //try exports
   }
 }());
-
