@@ -491,6 +491,7 @@ function checkIfInstanceOf(object, instances) {
    */
   json.serialize = function (object, config) {
     var inst = new Json(config);
+    config = config || {};
     if (config.drawValue) {
       inst.drawValue = config.drawValue;
     }
