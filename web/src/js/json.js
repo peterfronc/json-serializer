@@ -320,7 +320,7 @@
           this.updatePathElements(parentPathElements, level, propOrIdx);
           el = this._processor(obj, parentElements, level, parentPathElements, i);
         } catch (ex) {
-          removeFromArray(object, parentElements);
+          cancelCurrentObjectFromTracking(level, parentElements);
           this.clearPathElements(parentPathElements, level);
           return jsonString(String(ex));
         }
@@ -328,7 +328,7 @@
           strings.push(el);
         }
       }
-      removeFromArray(object, parentElements);
+      cancelCurrentObjectFromTracking(level, parentElements);
       this.clearPathElements(parentPathElements, level);
       return this.drawArray(
               indent,
@@ -369,12 +369,12 @@
           strings.push(elString);
         }
       } catch (ex) {//SOME OBJECT CAN THROW EXCEPTION ON Access, FRAMES ETC.
-        removeFromArray(object, parentElements);
+        cancelCurrentObjectFromTracking(level, parentElements);
         this.clearPathElements(parentPathElements, level);
         return jsonString(String(ex));
       }
     }
-    removeFromArray(object, parentElements);
+    cancelCurrentObjectFromTracking(level, parentElements);
     this.clearPathElements(parentPathElements, level);
     return this.drawObject(indent, strings, object, parentElements);
 
@@ -455,13 +455,8 @@ function checkIfInstanceOf(object, instances) {
     return false;
   }
 
-  function removeFromArray(object, array) {
-    for (var i = 0; i < array.length; i++) {
-      if (array[i] === object) {
-        array.splice(i, 1);
-      }
-    }
-    return array;
+  function cancelCurrentObjectFromTracking(level, array) {
+    array.splice(level - 1);
   }
 
   function jsonString(object) {
