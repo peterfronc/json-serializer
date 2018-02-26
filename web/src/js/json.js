@@ -201,6 +201,18 @@
               pathElements);
   };
 
+  Json.prototype.updatePathElements = function (pathElements, level, propOrIdx) {
+    if (pathElements) {
+      pathElements[level - 1] = propOrIdx;
+    }
+  };
+
+  Json.prototype.clearPathElements = function (pathElements, level) {
+    if (pathElements) {
+      return pathElements.splice(level - 1);
+    }
+  };
+
   /*
    * @private
    * Serializer engine.
@@ -305,15 +317,11 @@
           if (!this.raw && (obj === undefined)) {
             obj = null;
           }
-          if (pathElements) {
-            pathElements[level - 1] = propOrIdx;
-          }
+          this.updatePathElements(pathElements, level, propOrIdx);
           el = this._processor(obj, parentElements, level, pathElements, i);
         } catch (ex) {
           removeFromArray(object, parentElements);
-          if (pathElements) {
-            pathElements.splice(level -1);
-          }
+          this.clearPathElements(pathElements, level);
           return jsonString(String(ex));
         }
         if (el !== undefined) {
@@ -321,9 +329,7 @@
         }
       }
       removeFromArray(object, parentElements);
-      if (pathElements) {
-        pathElements.splice(level -1);
-      }
+      this.clearPathElements(pathElements, level);
       return this.drawArray(
               indent,
               strings,
@@ -354,9 +360,7 @@
         continue;
       }
       try {
-        if (pathElements) {
-          pathElements[level - 1] = propOrIdx;
-        }
+        this.updatePathElements(pathElements, level, propOrIdx);
         var objEl =
                 this._processor(prop, parentElements, level, pathElements, key);
         if (objEl !== undefined) {
@@ -366,16 +370,12 @@
         }
       } catch (ex) {//SOME OBJECT CAN THROW EXCEPTION ON Access, FRAMES ETC.
         removeFromArray(object, parentElements);
-        if (pathElements) {
-          pathElements.splice(level -1);
-        }
+        this.clearPathElements(pathElements, level);
         return jsonString(String(ex));
       }
     }
     removeFromArray(object, parentElements);
-    if (pathElements) {
-      pathElements.splice(level -1);
-    }
+    this.clearPathElements(pathElements, level);
     return this.drawObject(indent, strings, object, parentElements);
 
   };
