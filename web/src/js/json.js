@@ -14,46 +14,46 @@
     this.config = config;
 
     if (config) {
-      if (config.prettyPrint) {
+      if (config.prettyPrint !== undefined) {
         this.prettyPrint = true;
       }
-      if (config.raw) {
+      if (config.raw !== undefined) {
         this.raw = config.raw;
       } //json type as default
-      if (config.renderRedirect) {
+      if (config.renderRedirect !== undefined) {
         this.renderRedirect = config.renderRedirect;
       } //json type as default
-      if (config.excludeInstances) {
+      if (config.excludeInstances !== undefined) {
         this.excludeInstances = config.excludeInstances;
       }
-      if (config.excludeTypes) {
+      if (config.excludeTypes !== undefined) {
         this.excludeTypes = config.excludeTypes;
       }
-      if (config.exclude) {
+      if (config.exclude !== undefined) {
         this.exclude = config.exclude;
       }
-      if (config.excludeNames) {
+      if (config.excludeNames !== undefined) {
         this.excludeNames = config.excludeNames;
       }
-      if (config.excludeMatches) {
+      if (config.excludeMatches !== undefined) {
         this.excludeMatches = config.excludeMatches;
       }
-      if (config.hasOwn !== undefined) {
+      if (config.hasOwn !== undefined !== undefined) {
         this.hasOwn = config.hasOwn;
       }
-      if (config.fakeFunctions) {
+      if (config.fakeFunctions !== undefined) {
         this.fakeFunctions = config.fakeFunctions;
       }
-      if (config.realFunctions) {
+      if (config.realFunctions !== undefined) {
         this.realFunctions = config.realFunctions;
       }
-      if (config.includeFunctions) {
+      if (config.includeFunctions !== undefined) {
         this.includeFunctions = config.includeFunctions;
       }
-      if (config.excludeOnTrue) {
+      if (config.excludeOnTrue !== undefined) {
         this.excludeOnTrue = config.excludeOnTrue;
       }
-      if (config.dateAsString) {
+      if (config.dateAsString !== undefined) {
         this.dateAsString = config.dateAsString;
       }
       if (config.TAB !== undefined) {
@@ -65,11 +65,14 @@
       if (config.COMMA !== undefined) {
         this.COMMA = config.COMMA;
       }
-      if (config.level) { // backwards compatibility
+      if (config.level !== undefined) { // backwards compatibility
         this.levelMax = config.level;
       }
-      if (config.levelMax) {
+      if (config.levelMax !== undefined) {
         this.levelMax = config.levelMax;
+      }
+      if (config.trackPaths !== undefined) {
+        this.trackPaths = config.trackPaths
       }
     }
   }
@@ -101,7 +104,7 @@
    * @param {type} object
    * @returns {unresolved}
    */
-  Json.prototype.drawValue = function (string, object, level) {
+  Json.prototype.drawValue = function (string, object, level, pathElements) {
       return string;
   };
 
@@ -113,7 +116,8 @@
    * @param {type} level
    * @returns {String}
    */
-  Json.prototype.drawProperty = function (key, object, parentElements, level) {
+  Json.prototype.drawProperty = function (
+          key, object, parentElements, level, pathElements) {
     return (["\"", key.replace(/\"/g, "\\\""), "\"", this.PROP_INDENT].join(""));
   };
 
@@ -129,7 +133,8 @@
                       indentString,
                       parts,
                       object,
-                      parentElements) {
+                      parentElements,
+                      pathElements) {
     return this.drawGeneralObject(
       "[", "]",
       indentString,
@@ -185,10 +190,15 @@
   Json.prototype.serialize = function (object) {
     var level = 0;
     var parentElements = [];
+    var pathElements;
+    if (this.trackPaths) {
+      pathElements = [];
+    }
     return this._processor(
               object,
               parentElements,
-              level);
+              level,
+              pathElements);
   };
 
   /*
@@ -204,6 +214,7 @@
                                   object,
                                   parentElements,
                                   level,
+                                  pathElements,
                                   propOrIdx) {
     if (this.levelMax >= 0 && level >= this.levelMax) {
       return undefined;
@@ -240,19 +251,20 @@
                 (!this.raw || this.dateAsString) ?
                   jsonString(object.toISOString()) : object.valueOf(),
                 object,
-                level);
+                level,
+                pathElements);
     } else if (!this.includeFunctions && typeof object === "function") {
       return undefined;
     } else if (typeof object === "number") {
-      return this.drawValue(String(object), object, level);
+      return this.drawValue(String(object), object, level, pathElements);
     } else if (typeof object === "string") {
       return this.drawValue(jsonString(object), object, level);
     } else if (object === null) {
-      return this.drawValue("null", object, level);
+      return this.drawValue("null", object, level, pathElements);
     } else if (object === undefined) {
-      return this.raw ? this.drawValue("undefined", object, level) : undefined;
+      return this.raw ? this.drawValue("undefined", object, level, pathElements) : undefined;
     } else if (typeof object === "boolean") {
-      return this.drawValue(String(object), object, level);
+      return this.drawValue(String(object), object, level, pathElements);
     }
 
     if (this.includeFunctions && typeof object === "function") {
@@ -265,7 +277,7 @@
       if (this.realFunctions) {
         // @todo
         var out = this.prettyPrint ? object.toString() : object.toString();
-        return this.drawValue(out, object, level);
+        return this.drawValue(out, object, level, pathElements);
       }
     }
 
@@ -293,9 +305,15 @@
           if (!this.raw && (obj === undefined)) {
             obj = null;
           }
-          el = this._processor(obj, parentElements, level, i);
+          if (pathElements) {
+            pathElements[level - 1] = propOrIdx;
+          }
+          el = this._processor(obj, parentElements, level, pathElements, i);
         } catch (ex) {
           removeFromArray(object, parentElements);
+          if (pathElements) {
+            pathElements.splice(level -1);
+          }
           return jsonString(String(ex));
         }
         if (el !== undefined) {
@@ -303,6 +321,9 @@
         }
       }
       removeFromArray(object, parentElements);
+      if (pathElements) {
+        pathElements.splice(level -1);
+      }
       return this.drawArray(
               indent,
               strings,
@@ -333,19 +354,28 @@
         continue;
       }
       try {
+        if (pathElements) {
+          pathElements[level - 1] = propOrIdx;
+        }
         var objEl =
-                this._processor(prop, parentElements, level, key);
+                this._processor(prop, parentElements, level, pathElements, key);
         if (objEl !== undefined) {
           var elString =
-                  this.drawProperty(key, object, parentElements, level) + objEl;
+                  this.drawProperty(key, object, parentElements, level, pathElements) + objEl;
           strings.push(elString);
         }
       } catch (ex) {//SOME OBJECT CAN THROW EXCEPTION ON Access, FRAMES ETC.
         removeFromArray(object, parentElements);
+        if (pathElements) {
+          pathElements.splice(level -1);
+        }
         return jsonString(String(ex));
       }
     }
     removeFromArray(object, parentElements);
+    if (pathElements) {
+      pathElements.splice(level -1);
+    }
     return this.drawObject(indent, strings, object, parentElements);
 
   };
