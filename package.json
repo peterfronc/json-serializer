@@ -1,6 +1,6 @@
 {
   "name": "json-serializer",
-  "version": "2.0.7",
+  "version": "2.0.8",
   "description": "JSON compatible serializer and deserializer for javascript.",
   "main": "web/src/js/json.js",
   "directories": {},
