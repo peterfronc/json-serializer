@@ -71,8 +71,8 @@
       if (config.levelMax !== undefined) {
         this.levelMax = config.levelMax;
       }
-      if (config.trackPaths !== undefined) {
-        this.trackPaths = config.trackPaths
+      if (config.trackParentPath !== undefined) {
+        this.trackParentPath = config.trackParentPath
       }
     }
   }
@@ -104,7 +104,7 @@
    * @param {type} object
    * @returns {unresolved}
    */
-  Json.prototype.drawValue = function (string, object, level, pathElements) {
+  Json.prototype.drawValue = function (string, object, level, parentPathElements) {
       return string;
   };
 
@@ -117,7 +117,7 @@
    * @returns {String}
    */
   Json.prototype.drawProperty = function (
-          key, object, parentElements, level, pathElements) {
+          key, object, parentElements, level, parentPathElements) {
     return (["\"", key.replace(/\"/g, "\\\""), "\"", this.PROP_INDENT].join(""));
   };
 
@@ -134,7 +134,7 @@
                       parts,
                       object,
                       parentElements,
-                      pathElements) {
+                      parentPathElements) {
     return this.drawGeneralObject(
       "[", "]",
       indentString,
@@ -190,26 +190,26 @@
   Json.prototype.serialize = function (object) {
     var level = 0;
     var parentElements = [];
-    var pathElements;
-    if (this.trackPaths) {
-      pathElements = [];
+    var parentPathElements;
+    if (this.trackParentPath) {
+      parentPathElements = [];
     }
     return this._processor(
               object,
               parentElements,
               level,
-              pathElements);
+              parentPathElements);
   };
 
-  Json.prototype.updatePathElements = function (pathElements, level, propOrIdx) {
-    if (pathElements) {
-      pathElements[level - 1] = propOrIdx;
+  Json.prototype.updatePathElements = function (parentPathElements, level, propOrIdx) {
+    if (parentPathElements && level > 1) {
+      parentPathElements[level - 2] = propOrIdx;
     }
   };
 
-  Json.prototype.clearPathElements = function (pathElements, level) {
-    if (pathElements) {
-      return pathElements.splice(level - 1);
+  Json.prototype.clearPathElements = function (parentPathElements, level) {
+    if (parentPathElements) {
+      return parentPathElements.splice(level - 1);
     }
   };
 
@@ -226,7 +226,7 @@
                                   object,
                                   parentElements,
                                   level,
-                                  pathElements,
+                                  parentPathElements,
                                   propOrIdx) {
     if (this.levelMax >= 0 && level >= this.levelMax) {
       return undefined;
@@ -264,19 +264,19 @@
                   jsonString(object.toISOString()) : object.valueOf(),
                 object,
                 level,
-                pathElements);
+                parentPathElements);
     } else if (!this.includeFunctions && typeof object === "function") {
       return undefined;
     } else if (typeof object === "number") {
-      return this.drawValue(String(object), object, level, pathElements);
+      return this.drawValue(String(object), object, level, parentPathElements);
     } else if (typeof object === "string") {
       return this.drawValue(jsonString(object), object, level);
     } else if (object === null) {
-      return this.drawValue("null", object, level, pathElements);
+      return this.drawValue("null", object, level, parentPathElements);
     } else if (object === undefined) {
-      return this.raw ? this.drawValue("undefined", object, level, pathElements) : undefined;
+      return this.raw ? this.drawValue("undefined", object, level, parentPathElements) : undefined;
     } else if (typeof object === "boolean") {
-      return this.drawValue(String(object), object, level, pathElements);
+      return this.drawValue(String(object), object, level, parentPathElements);
     }
 
     if (this.includeFunctions && typeof object === "function") {
@@ -289,7 +289,7 @@
       if (this.realFunctions) {
         // @todo
         var out = this.prettyPrint ? object.toString() : object.toString();
-        return this.drawValue(out, object, level, pathElements);
+        return this.drawValue(out, object, level, parentPathElements);
       }
     }
 
@@ -317,11 +317,11 @@
           if (!this.raw && (obj === undefined)) {
             obj = null;
           }
-          this.updatePathElements(pathElements, level, propOrIdx);
-          el = this._processor(obj, parentElements, level, pathElements, i);
+          this.updatePathElements(parentPathElements, level, propOrIdx);
+          el = this._processor(obj, parentElements, level, parentPathElements, i);
         } catch (ex) {
           removeFromArray(object, parentElements);
-          this.clearPathElements(pathElements, level);
+          this.clearPathElements(parentPathElements, level);
           return jsonString(String(ex));
         }
         if (el !== undefined) {
@@ -329,7 +329,7 @@
         }
       }
       removeFromArray(object, parentElements);
-      this.clearPathElements(pathElements, level);
+      this.clearPathElements(parentPathElements, level);
       return this.drawArray(
               indent,
               strings,
@@ -360,22 +360,22 @@
         continue;
       }
       try {
-        this.updatePathElements(pathElements, level, propOrIdx);
+        this.updatePathElements(parentPathElements, level, propOrIdx);
         var objEl =
-                this._processor(prop, parentElements, level, pathElements, key);
+                this._processor(prop, parentElements, level, parentPathElements, key);
         if (objEl !== undefined) {
           var elString =
-                  this.drawProperty(key, object, parentElements, level, pathElements) + objEl;
+                  this.drawProperty(key, object, parentElements, level, parentPathElements) + objEl;
           strings.push(elString);
         }
       } catch (ex) {//SOME OBJECT CAN THROW EXCEPTION ON Access, FRAMES ETC.
         removeFromArray(object, parentElements);
-        this.clearPathElements(pathElements, level);
+        this.clearPathElements(parentPathElements, level);
         return jsonString(String(ex));
       }
     }
     removeFromArray(object, parentElements);
-    this.clearPathElements(pathElements, level);
+    this.clearPathElements(parentPathElements, level);
     return this.drawObject(indent, strings, object, parentElements);
 
   };
