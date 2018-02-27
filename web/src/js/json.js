@@ -72,10 +72,10 @@
         this.levelMax = config.levelMax;
       }
       if (config.trackParentPath !== undefined) {
-        this.trackParentPath = config.trackParentPath
+        this.trackParentPath = config.trackParentPath;
       }
       if (config.getEOL !== undefined) {
-        this.getEOL = config.getEOL
+        this.getEOL = config.getEOL;
       }
     }
   }
@@ -102,15 +102,25 @@
   };
 
   var EOL = "\n";
+  /**
+   * Function used to return EOL when in prettyPrint mode.
+   * Ideal to wrap up elements.
+   * @param {type} object
+   * @param {type} parentElements
+   * @param {type} parentPathElements
+   * @returns {jsonL#11.EOL}
+   */
   Json.prototype.getEOL = function (
       object, parentElements, parentPathElements) {
     return EOL;
   };
 
   /**
-   *
+   * Function used to draw object (and array) primitive values.
    * @param {type} string
    * @param {type} object
+   * @param {type} level
+   * @param {type} parentPathElements
    * @returns {unresolved}
    */
   Json.prototype.drawValue = function (
@@ -119,7 +129,7 @@
   };
 
   /**
-   *
+   * Function used to draw property of objects.
    * @param {type} key
    * @param {type} object
    * @param {type} parentElements
