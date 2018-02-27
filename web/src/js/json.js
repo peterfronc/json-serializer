@@ -74,6 +74,9 @@
       if (config.trackParentPath !== undefined) {
         this.trackParentPath = config.trackParentPath
       }
+      if (config.getEOL !== undefined) {
+        this.getEOL = config.getEOL
+      }
     }
   }
 
@@ -98,13 +101,20 @@
     levelMax: -1
   };
 
+  var EOL = "\n";
+  Json.prototype.getEOL = function (
+      object, parentElements, parentPathElements) {
+    return EOL;
+  };
+
   /**
    *
    * @param {type} string
    * @param {type} object
    * @returns {unresolved}
    */
-  Json.prototype.drawValue = function (string, object, level, parentPathElements) {
+  Json.prototype.drawValue = function (
+        string, object, level, parentPathElements) {
       return string;
   };
 
@@ -140,20 +150,23 @@
       indentString,
       parts,
       object,
-      parentElements);
+      parentElements,
+      parentPathElements);
   };
 
   Json.prototype.drawObject = function (
                       indentString,
                       parts,
                       object,
-                      parentElements) {
+                      parentElements,
+                      parentPathElements) {
     return this.drawGeneralObject(
       "{", "}",
       indentString,
       parts,
       object,
-      parentElements);
+      parentElements,
+      parentPathElements);
   };
 
   Json.prototype.drawGeneralObject = function (
@@ -161,18 +174,20 @@
           indentString,
           parts,
           object,
-          parentElements) {
+          parentElements,
+          parentPathElements) {
     var array;
 
     if (indentString || this.prettyPrint) {
       if (parts.length === 0) {
         array = [lbracket, parts.join(this.COMMA), rbracket];
       } else {
+        var eol = this.getEOL(object, parentElements, parentPathElements);
         array = [
-          lbracket, "\n",
+          lbracket, eol,
           indentString, this.TAB,
-          parts.join(this.COMMA + "\n" + indentString + this.TAB),
-          "\n", indentString, rbracket
+          parts.join(this.COMMA + eol + indentString + this.TAB),
+          eol, indentString, rbracket
         ];
       }
     } else {
@@ -334,7 +349,8 @@
               indent,
               strings,
               object,
-              parentElements);
+              parentElements,
+              parentPathElements);
     }
 
     // else:
@@ -376,7 +392,7 @@
     }
     cancelCurrentObjectFromTracking(level, parentElements);
     this.clearPathElements(parentPathElements, level);
-    return this.drawObject(indent, strings, object, parentElements);
+    return this.drawObject(indent, strings, object, parentElements, parentPathElements);
 
   };
 
